@@ -1,5 +1,8 @@
 streamlit
 pandas
+plotly
 matplotlib
-scikit-learn
 openpyxl
+scikit-learn
+fpdf
+
