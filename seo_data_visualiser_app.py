@@ -37,17 +37,39 @@ if uploaded_file is not None:
     df['Opportunity Score'] = df['Impressions'] * (1 - df['CTR (%)'] / 100)
 
     # =========================
-    # Keyword Clustering
-    # =========================
-    vectorizer = TfidfVectorizer(stop_words='english')
-    X = vectorizer.fit_transform(df['Keyword'])
-    kmeans = KMeans(n_clusters=4, random_state=42)
-    df['Cluster'] = kmeans.fit_predict(X)
+# =========================
+# Keyword Clustering (Auto & Smart)
+# =========================
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+import numpy as np
+from collections import Counter
 
-    st.subheader("🧩 Keyword Clusters")
-    for cluster_num in range(4):
-        keywords = ", ".join(df[df['Cluster'] == cluster_num]['Keyword'].tolist())
-        st.markdown(f"**Cluster {cluster_num+1}:** {keywords}")
+st.subheader("🧩 Keyword Clusters")
+
+# Vectorize the keywords
+vectorizer = TfidfVectorizer(stop_words='english')
+X = vectorizer.fit_transform(df['Keyword'])
+
+# Automatically decide number of clusters (min 2, max 8)
+n_clusters = min(max(2, len(df) // 10), 8)
+kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+df['Cluster'] = kmeans.fit_predict(X)
+
+# Extract top terms from each cluster to give it a "topic" name
+terms = np.array(vectorizer.get_feature_names_out())
+cluster_names = []
+
+for i in range(n_clusters):
+    cluster_center = kmeans.cluster_centers_[i]
+    top_term_indices = cluster_center.argsort()[-3:][::-1]
+    top_terms = ", ".join(terms[top_term_indices])
+    cluster_names.append(top_terms)
+
+# Display each cluster with a human-readable label
+for i, name in enumerate(cluster_names):
+    keywords = ", ".join(df[df['Cluster'] == i]['Keyword'].tolist())
+    st.markdown(f"**Cluster {i+1} — {name.title()}:** {keywords}")
 
     # =========================
     # Visualisations
