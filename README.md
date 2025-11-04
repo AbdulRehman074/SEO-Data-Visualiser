@@ -30,7 +30,7 @@ It analyses small keyword and page-performance datasets, then visualises keyword
 
 ### 🚀 Live Demo  
 🔗 **Try it here:**  
-[👉 Open SEO Data Visualiser](https://YOUR-USERNAME-seo-data-visualiser.streamlit.app/)
+[👉 Open SEO Data Visualiser](https://seo-data-visualiser-by-abdulrehman.streamlit.app/)
 
 ---
 
@@ -62,19 +62,13 @@ After analysis, you can export a **summary report** in PDF format directly from 
 
 ---
 
-### 📸 Screenshots
-
-_Add your screenshots here (optional)_  
-Example:  
-![SEO Data Visualiser Dashboard](screenshots/dashboard.png)
-
 ---
 
 ### 👨‍💻 Author
 
 **Abdul Rehman**  
 AI • Machine Learning • Data Science Enthusiast  
-📍 [GitHub](https://github.com/YOUR-USERNAME) | [LinkedIn](https://linkedin.com/in/YOUR-LINK)
+📍 [GitHub](https://github.com/AbdulRehman074) | [LinkedIn](https://www.linkedin.com/in/abdulrehman074/)
 
 ---
 
