@@ -32,9 +32,38 @@ if uploaded_file is not None:
     # =========================
     # Basic Cleaning
     # =========================
-    df.dropna(subset=['Keyword', 'Clicks', 'Impressions'], inplace=True)
-    df['CTR (%)'] = df['Clicks'] / df['Impressions'] * 100
-    df['Opportunity Score'] = df['Impressions'] * (1 - df['CTR (%)'] / 100)
+# =========================
+# Auto-detect and map required columns
+# =========================
+col_map = {
+    'Keyword': None,
+    'Clicks': None,
+    'Impressions': None
+}
+
+for col in df.columns:
+    col_lower = col.lower()
+    if 'keyword' in col_lower or 'term' in col_lower:
+        col_map['Keyword'] = col
+    elif 'click' in col_lower:
+        col_map['Clicks'] = col
+    elif 'impression' in col_lower or 'view' in col_lower:
+        col_map['Impressions'] = col
+
+# Check if all required columns were found
+if None in col_map.values():
+    st.error("❌ The uploaded file must include columns for keywords, clicks, and impressions.")
+    st.info("👉 Example column names: 'Keyword', 'Clicks', 'Impressions'")
+    st.stop()
+
+# Rename columns for consistency
+df.rename(columns=col_map, inplace=True)
+
+# Continue analysis
+df.dropna(subset=['Keyword', 'Clicks', 'Impressions'], inplace=True)
+df['CTR (%)'] = df['Clicks'] / df['Impressions'] * 100
+df['Opportunity Score'] = df['Impressions'] * (1 - df['CTR (%)'] / 100)
+
 
     # =========================
 # =========================
@@ -124,3 +153,14 @@ for i, name in enumerate(cluster_names):
 
 else:
     st.info("👆 Please upload an Excel file to start your SEO analysis.")
+
+    st.write("""
+    📘 **Instructions:**
+    Upload an Excel file containing at least these columns:
+    - **Keyword / Term** — your search phrase or topic  
+    - **Clicks** — total number of clicks  
+    - **Impressions / Views** — total times shown  
+
+    The app automatically detects similar names (e.g., “Search Term”, “Total Clicks”, “Views”).
+    """)
+
