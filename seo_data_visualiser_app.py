@@ -10,7 +10,7 @@ Original file is located at
 """
 
 # Install dependencies (if needed)
-pip install pandas plotly matplotlib openpyxl
+
 
 # Import
 import pandas as pd
