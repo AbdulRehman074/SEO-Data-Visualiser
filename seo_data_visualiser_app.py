@@ -16,7 +16,26 @@ import io
 # =========================
 st.set_page_config(page_title="SEO Data Visualiser", layout="wide")
 st.title("📊 SEO Data Visualiser & Report Generator")
-st.write("Upload your SEO Excel file to analyse keyword performance and download a professional report.")
+st.write("Upload your Excel file (SEO, research, product, or any keywords dataset) to analyse performance and download a professional report.")
+
+# =========================
+# 📂 Download Sample Template
+# =========================
+st.sidebar.header("🧾 Sample File")
+sample_data = pd.DataFrame({
+    "Keyword": ["AI tools", "Machine learning", "Deep learning", "Python course", "Cloud computing"],
+    "Clicks": [120, 90, 150, 200, 80],
+    "Impressions": [1200, 1000, 1500, 2500, 800]
+})
+
+buffer = io.BytesIO()
+sample_data.to_excel(buffer, index=False, engine="openpyxl")
+st.sidebar.download_button(
+    label="📥 Download Sample Excel",
+    data=buffer.getvalue(),
+    file_name="sample_seo_data.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
 
 # =========================
 # File Upload
@@ -33,11 +52,7 @@ if uploaded_file is not None:
     # =========================
     # Auto-detect and map required columns
     # =========================
-    col_map = {
-        'Keyword': None,
-        'Clicks': None,
-        'Impressions': None
-    }
+    col_map = {'Keyword': None, 'Clicks': None, 'Impressions': None}
 
     for col in df.columns:
         col_lower = col.lower()
@@ -141,7 +156,7 @@ if uploaded_file is not None:
     )
 
 else:
-    st.info("👆 Please upload an Excel file to start your SEO analysis.")
+    st.info("👆 Please upload an Excel file to start your analysis.")
     st.write("""
     📘 **Instructions:**
     Upload an Excel file containing at least these columns:
@@ -150,4 +165,5 @@ else:
     - **Impressions / Views** — total times shown  
 
     The app automatically detects similar names (e.g., “Search Term”, “Total Clicks”, “Views”).
+    You can also download a ready-made sample Excel from the sidebar.
     """)
