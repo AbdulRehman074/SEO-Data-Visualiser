@@ -36,7 +36,24 @@ if uploaded_file is not None:
 
 """# **Loading the Data**"""
 
-df = pd.read_excel("/content/sample seo data.xlsx")
+import streamlit as st
+import pandas as pd
+
+st.title("📈 SEO Data Visualiser")
+
+# File uploader for Excel files
+uploaded_file = st.file_uploader("Upload your SEO Excel file", type=["xlsx"])
+
+if uploaded_file is not None:
+    df = pd.read_excel(uploaded_file)
+    st.success("✅ File uploaded successfully!")
+    st.write("### Data Preview", df.head())
+
+    # Continue your analysis code below...
+    # Example:
+    # st.bar_chart(df['Clicks'])
+else:
+    st.warning("Please upload an Excel file to start the analysis.")
 df.head()
 
 """# **Basic Cleaning & Feature Creation**"""
