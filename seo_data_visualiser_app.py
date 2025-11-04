@@ -1,234 +1,104 @@
+# seo_data_visualiser_app.py
 # -*- coding: utf-8 -*-
-"""SEO_data_visualiser_app
-
-# **Installing / Importing Libraries**
-"""
-
-# Install dependencies (if needed)
-
-
-# Import
-import pandas as pd
-import plotly.express as px
-import matplotlib.pyplot as plt
-from datetime import datetime
-import os
-
-"""# **Uploading SEO Data**"""
 
 import streamlit as st
 import pandas as pd
-
-st.title("📊 SEO Data Visualiser")
-
-
-
-"""# **Loading the Data**"""
-
-import streamlit as st
-import pandas as pd
-
-st.title("📈 SEO Data Visualiser")
-
-# File uploader for Excel files
-uploaded_file = st.file_uploader("Upload your SEO Excel file", type=["xlsx"], key="seo_file_upload")
-
-if uploaded_file is not None:
-    df = pd.read_excel(uploaded_file)
-    st.success("✅ File uploaded successfully!")
-    st.write("### Data Preview", df.head())
-
-    # Continue your analysis code below...
-    # Example:
-    # st.bar_chart(df['Clicks'])
-else:
-    st.warning("Please upload an Excel file to start the analysis.")
-df.head()
-
-"""# **Basic Cleaning & Feature Creation**"""
-
-df['CTR (%)'] = (df['Clicks'] / df['Impressions']) * 100
-df['Opportunity Score'] = df['Impressions'] * (1 - df['CTR (%)']/100)
-df.sort_values(by='Clicks', ascending=False, inplace=True)
-df.head()
-
-"""# **Visualising Key Insights**
-
-> ### **Top Keywords by Clicks**
-"""
-
-fig = px.bar(df, x='Keyword', y='Clicks', title='Top Keywords by Clicks', text='Clicks')
-fig.show()
-
-"""
-
-> ### **CTR vs Impressions**
-
-"""
-
-fig = px.scatter(df, x='Impressions', y='CTR (%)', size='Clicks', color='Keyword',
-                 title='CTR vs Impressions (Bubble size = Clicks)')
-fig.show()
-
-"""> ### **Position Analysis**"""
-
-fig = px.bar(df.sort_values('Position'), x='Keyword', y='Position',
-             title='Average Position per Keyword (Lower is Better)', text='Position')
-fig.update_yaxes(autorange="reversed")
-fig.show()
-
-"""# **Keyword Opportunity Suggestions**"""
-
-top_opportunities = df.sort_values('Opportunity Score', ascending=False).head(5)
-print("Top Keyword Opportunities (High Impressions, Low CTR):")
-display(top_opportunities[['Keyword', 'Impressions', 'CTR (%)', 'Opportunity Score']])
-
-"""# **Keyword Clustering (using TF-IDF + KMeans)**"""
-
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import KMeans
-
-# Vectorize keywords
-vectorizer = TfidfVectorizer(stop_words='english')
-X = vectorizer.fit_transform(df['Keyword'])
-
-# Choose number of clusters (adjust as needed)
-n_clusters = 4
-kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-df['Cluster'] = kmeans.fit_predict(X)
-
-# Display clustered keywords
-print("✅ Keyword Clustering Results:")
-for cluster_num in range(n_clusters):
-    cluster_keywords = df[df['Cluster'] == cluster_num]['Keyword'].tolist()
-    print(f"\n🧩 Cluster {cluster_num+1}:")
-    print(", ".join(cluster_keywords))
-
-"""# **Exporting All Visuals to a Single PDF Report**"""
-
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
+from datetime import datetime
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+import io
 
-OUT_DIR = "/content"
-pdf_file = os.path.join(OUT_DIR, "seo_data_visualiser_report.pdf")
+# =========================
+# App Title & Description
+# =========================
+st.set_page_config(page_title="SEO Data Visualiser", layout="wide")
+st.title("📊 SEO Data Visualiser & Report Generator")
+st.write("Upload your SEO Excel file to analyse keyword performance and download a professional report.")
 
-with PdfPages(pdf_file) as pdf:
-    # Title Page
-    fig = plt.figure(figsize=(8.27, 11.69))
-    fig.text(0.5, 0.6, "SEO Data Visualiser Report", ha='center', fontsize=20)
-    fig.text(0.5, 0.5, f"Auto-generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-             ha='center', fontsize=10)
-    pdf.savefig(fig)
-    plt.close(fig)
+# =========================
+# File Upload
+# =========================
+uploaded_file = st.file_uploader("📤 Upload Excel File", type=["xlsx"])
 
-    # 1️⃣ Top Keywords by Clicks
-    fig, ax = plt.subplots(figsize=(8, 4))
-    ax.bar(df['Keyword'], df['Clicks'], color='skyblue')
-    ax.set_title('Top Keywords by Clicks')
-    ax.set_ylabel('Clicks')
-    plt.xticks(rotation=30, ha='right')
-    plt.tight_layout()
-    pdf.savefig(fig)
-    plt.close(fig)
+if uploaded_file is not None:
+    # Load Data
+    df = pd.read_excel(uploaded_file)
+    st.success("✅ File uploaded successfully!")
+    st.subheader("🔍 Data Preview")
+    st.dataframe(df.head())
 
-    # 2️⃣ CTR vs Impressions
-    fig, ax = plt.subplots(figsize=(8, 4))
-    scatter = ax.scatter(df['Impressions'], df['CTR (%)'], c='green', s=df['Clicks'], alpha=0.6)
-    ax.set_title('CTR vs Impressions')
-    ax.set_xlabel('Impressions')
-    ax.set_ylabel('CTR (%)')
-    plt.tight_layout()
-    pdf.savefig(fig)
-    plt.close(fig)
+    # =========================
+    # Basic Cleaning
+    # =========================
+    df.dropna(subset=['Keyword', 'Clicks', 'Impressions'], inplace=True)
+    df['CTR (%)'] = df['Clicks'] / df['Impressions'] * 100
+    df['Opportunity Score'] = df['Impressions'] * (1 - df['CTR (%)'] / 100)
 
-    # 3️⃣ Position Analysis
-    fig, ax = plt.subplots(figsize=(8, 4))
-    ax.bar(df['Keyword'], df['Position'], color='orange')
-    ax.set_title('Average Position per Keyword (Lower is Better)')
-    ax.set_ylabel('Position')
-    plt.xticks(rotation=30, ha='right')
-    plt.tight_layout()
-    pdf.savefig(fig)
-    plt.close(fig)
+    # =========================
+    # Keyword Clustering
+    # =========================
+    vectorizer = TfidfVectorizer(stop_words='english')
+    X = vectorizer.fit_transform(df['Keyword'])
+    kmeans = KMeans(n_clusters=4, random_state=42)
+    df['Cluster'] = kmeans.fit_predict(X)
 
-    # 4️⃣ Keyword Opportunity Table (Text summary)
-    fig = plt.figure(figsize=(8.27, 11.69))
-    fig.text(0.5, 0.9, "Top Keyword Opportunities", ha='center', fontsize=16)
-    y_pos = 0.8
-    for _, row in top_opportunities.iterrows():
-        text = f"{row['Keyword']} — {row['Impressions']} impressions, CTR: {row['CTR (%)']:.2f}%"
-        fig.text(0.2, y_pos, text, fontsize=10)
-        y_pos -= 0.05
-    pdf.savefig(fig)
-    plt.close(fig)
+    st.subheader("🧩 Keyword Clusters")
+    for cluster_num in range(4):
+        keywords = ", ".join(df[df['Cluster'] == cluster_num]['Keyword'].tolist())
+        st.markdown(f"**Cluster {cluster_num+1}:** {keywords}")
 
-print("✅ PDF report generated successfully!")
-print(f"Saved to: {pdf_file}")
+    # =========================
+    # Visualisations
+    # =========================
+    st.subheader("📈 Top Keywords by Clicks")
+    top_keywords = df.sort_values('Clicks', ascending=False).head(10)
+    st.bar_chart(data=top_keywords, x='Keyword', y='Clicks')
 
-"""# **Downloading it to your system**"""
+    st.subheader("🎯 CTR vs Impressions")
+    st.scatter_chart(data=df, x='Impressions', y='CTR (%)')
 
-from google.colab import files
-files.download("/content/seo_data_visualiser_report.pdf")
+    # =========================
+    # Generate PDF Report
+    # =========================
+    st.subheader("📄 Generate & Download Report")
+    buffer = io.BytesIO()
+    with PdfPages(buffer) as pdf:
+        # 1️⃣ Title Page
+        fig = plt.figure(figsize=(8.27, 11.69))
+        fig.text(0.5, 0.6, "SEO Data Visualiser Report", ha='center', fontsize=20)
+        fig.text(0.5, 0.5, f"Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                 ha='center', fontsize=10)
+        pdf.savefig(fig)
+        plt.close(fig)
 
-# Commented out IPython magic to ensure Python compatibility.
-# %%writefile seo_data_visualiser_app.py
-# import streamlit as st
-# import pandas as pd
-# import matplotlib.pyplot as plt
-# from matplotlib.backends.backend_pdf import PdfPages
-# from datetime import datetime
-# from sklearn.feature_extraction.text import TfidfVectorizer
-# from sklearn.cluster import KMeans
-# import io
-# 
-# st.title("📊 SEO Data Visualiser & Report Generator")
-# st.write("Upload your SEO performance Excel file to generate insights and a downloadable PDF report.")
-# 
-# uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
-# 
-# if uploaded_file:
-#     df = pd.read_excel(uploaded_file)
-#     st.subheader("Data Preview")
-#     st.dataframe(df.head())
-# 
-#     # Basic cleaning
-#     df.dropna(subset=['Keyword', 'Clicks', 'Impressions'], inplace=True)
-#     df['CTR (%)'] = df['Clicks'] / df['Impressions'] * 100
-# 
-#     # Keyword clustering
-#     vectorizer = TfidfVectorizer(stop_words='english')
-#     X = vectorizer.fit_transform(df['Keyword'])
-#     kmeans = KMeans(n_clusters=4, random_state=42)
-#     df['Cluster'] = kmeans.fit_predict(X)
-# 
-#     st.subheader("Keyword Clusters")
-#     for cluster_num in range(4):
-#         st.markdown(f"**Cluster {cluster_num+1}:** " + ", ".join(df[df['Cluster']==cluster_num]['Keyword'].tolist()))
-# 
-#     # Generate visuals and PDF
-#     buffer = io.BytesIO()
-#     with PdfPages(buffer) as pdf:
-#         # Title page
-#         fig = plt.figure(figsize=(8.27,11.69))
-#         fig.text(0.5,0.6,"SEO Data Visualiser Report",ha='center',fontsize=20)
-#         fig.text(0.5,0.5,f"Auto-generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",ha='center',fontsize=10)
-#         pdf.savefig(fig); plt.close(fig)
-# 
-#         # Top keywords by clicks
-#         fig, ax = plt.subplots(figsize=(8,4))
-#         top_keywords = df.sort_values('Clicks', ascending=False).head(10)
-#         ax.bar(top_keywords['Keyword'], top_keywords['Clicks'], color='skyblue')
-#         ax.set_title('Top Keywords by Clicks'); plt.xticks(rotation=30, ha='right')
-#         plt.tight_layout(); pdf.savefig(fig); plt.close(fig)
-# 
-#         # CTR vs Impressions
-#         fig, ax = plt.subplots(figsize=(8,4))
-#         ax.scatter(df['Impressions'], df['CTR (%)'], c='green', alpha=0.6)
-#         ax.set_title('CTR vs Impressions'); ax.set_xlabel('Impressions'); ax.set_ylabel('CTR (%)')
-#         plt.tight_layout(); pdf.savefig(fig); plt.close(fig)
-# 
-#     st.success("✅ PDF report generated!")
-#     st.download_button("📥 Download PDF", data=buffer.getvalue(),
-#                        file_name="seo_data_visualiser_report.pdf",
-#                        mime="application/pdf")
-#
+        # 2️⃣ Top Keywords by Clicks
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.bar(top_keywords['Keyword'], top_keywords['Clicks'], color='skyblue')
+        ax.set_title('Top Keywords by Clicks')
+        plt.xticks(rotation=30, ha='right')
+        plt.tight_layout()
+        pdf.savefig(fig)
+        plt.close(fig)
+
+        # 3️⃣ CTR vs Impressions
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.scatter(df['Impressions'], df['CTR (%)'], c='green', alpha=0.6)
+        ax.set_title('CTR vs Impressions')
+        ax.set_xlabel('Impressions')
+        ax.set_ylabel('CTR (%)')
+        plt.tight_layout()
+        pdf.savefig(fig)
+        plt.close(fig)
+
+    st.success("✅ PDF report generated successfully!")
+    st.download_button(
+        label="📥 Download PDF Report",
+        data=buffer.getvalue(),
+        file_name="seo_data_visualiser_report.pdf",
+        mime="application/pdf"
+    )
+
+else:
+    st.info("👆 Please upload an Excel file to start your SEO analysis.")
