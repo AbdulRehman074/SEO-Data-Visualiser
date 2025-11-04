@@ -35,7 +35,7 @@ It analyses small keyword and page-performance datasets, then visualises keyword
 
 ### 🧩 How to Run Locally  
 
-```bash
+
 # 1. Clone the repository
 git clone https://github.com/YOUR-USERNAME/seo-data-visualiser.git
 cd seo-data-visualiser
