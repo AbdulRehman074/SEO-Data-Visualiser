@@ -21,10 +21,18 @@ import os
 
 """# **Uploading SEO Data**"""
 
-from google.colab import files
+import streamlit as st
+import pandas as pd
 
-print("/content/sample seo data.xlsx")
-uploaded = files.upload()
+st.title("📊 SEO Data Visualiser")
+
+# Upload Excel file
+uploaded_file = st.file_uploader("Upload your SEO Excel file", type=["xlsx"])
+
+if uploaded_file is not None:
+    df = pd.read_excel(uploaded_file)
+    st.write("### Data Preview", df.head())
+
 
 """# **Loading the Data**"""
 
