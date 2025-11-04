@@ -33,20 +33,6 @@ It analyses small keyword and page-performance datasets, then visualises keyword
 
 ---
 
-### 🧩 How to Run Locally  
-
-
-# 1. Clone the repository
-git clone https://github.com/YOUR-USERNAME/seo-data-visualiser.git
-cd seo-data-visualiser
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Run the app
-streamlit run seo_data_visualiser_app.py
-
-
 ---
 
 ### 📘 Example Use Case
