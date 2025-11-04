@@ -1,6 +1,7 @@
 # 📊 SEO Data Visualiser
 
-[![Open in Streamlit](https://seo-data-visualiser-by-abdulrehman.streamlit.app/)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://seo-data-visualiser-by-abdulrehman.streamlit.app/)
+
 
 ### 🎯 Overview  
 **SEO Data Visualiser** is a learning project that demonstrates how simple data analytics and visualisation can support SEO and AEO (Answer Engine Optimisation) workflows.  
