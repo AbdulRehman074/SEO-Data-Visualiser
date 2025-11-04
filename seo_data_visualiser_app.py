@@ -8,6 +8,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from datetime import datetime
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
+import numpy as np
 import io
 
 # =========================
@@ -30,75 +31,63 @@ if uploaded_file is not None:
     st.dataframe(df.head())
 
     # =========================
-    # Basic Cleaning
+    # Auto-detect and map required columns
     # =========================
-# =========================
-# Auto-detect and map required columns
-# =========================
-col_map = {
-    'Keyword': None,
-    'Clicks': None,
-    'Impressions': None
-}
+    col_map = {
+        'Keyword': None,
+        'Clicks': None,
+        'Impressions': None
+    }
 
-for col in df.columns:
-    col_lower = col.lower()
-    if 'keyword' in col_lower or 'term' in col_lower:
-        col_map['Keyword'] = col
-    elif 'click' in col_lower:
-        col_map['Clicks'] = col
-    elif 'impression' in col_lower or 'view' in col_lower:
-        col_map['Impressions'] = col
+    for col in df.columns:
+        col_lower = col.lower()
+        if 'keyword' in col_lower or 'term' in col_lower:
+            col_map['Keyword'] = col
+        elif 'click' in col_lower:
+            col_map['Clicks'] = col
+        elif 'impression' in col_lower or 'view' in col_lower:
+            col_map['Impressions'] = col
 
-# Check if all required columns were found
-if None in col_map.values():
-    st.error("❌ The uploaded file must include columns for keywords, clicks, and impressions.")
-    st.info("👉 Example column names: 'Keyword', 'Clicks', 'Impressions'")
-    st.stop()
+    # Check if all required columns were found
+    if None in col_map.values():
+        st.error("❌ The uploaded file must include columns for keywords, clicks, and impressions.")
+        st.info("👉 Example column names: 'Keyword', 'Clicks', 'Impressions'")
+        st.stop()
 
-# Rename columns for consistency
-df.rename(columns=col_map, inplace=True)
-
-# Continue analysis
-df.dropna(subset=['Keyword', 'Clicks', 'Impressions'], inplace=True)
-df['CTR (%)'] = df['Clicks'] / df['Impressions'] * 100
-df['Opportunity Score'] = df['Impressions'] * (1 - df['CTR (%)'] / 100)
-
+    # Rename columns for consistency
+    df.rename(columns=col_map, inplace=True)
 
     # =========================
-# =========================
-# Keyword Clustering (Auto & Smart)
-# =========================
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import KMeans
-import numpy as np
-from collections import Counter
+    # Data Cleaning & Metrics
+    # =========================
+    df.dropna(subset=['Keyword', 'Clicks', 'Impressions'], inplace=True)
+    df['CTR (%)'] = df['Clicks'] / df['Impressions'] * 100
+    df['Opportunity Score'] = df['Impressions'] * (1 - df['CTR (%)'] / 100)
 
-st.subheader("🧩 Keyword Clusters")
+    # =========================
+    # Keyword Clustering (Auto & Smart)
+    # =========================
+    st.subheader("🧩 Keyword Clusters")
 
-# Vectorize the keywords
-vectorizer = TfidfVectorizer(stop_words='english')
-X = vectorizer.fit_transform(df['Keyword'])
+    vectorizer = TfidfVectorizer(stop_words='english')
+    X = vectorizer.fit_transform(df['Keyword'])
 
-# Automatically decide number of clusters (min 2, max 8)
-n_clusters = min(max(2, len(df) // 10), 8)
-kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
-df['Cluster'] = kmeans.fit_predict(X)
+    n_clusters = min(max(2, len(df) // 10), 8)
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+    df['Cluster'] = kmeans.fit_predict(X)
 
-# Extract top terms from each cluster to give it a "topic" name
-terms = np.array(vectorizer.get_feature_names_out())
-cluster_names = []
+    terms = np.array(vectorizer.get_feature_names_out())
+    cluster_names = []
 
-for i in range(n_clusters):
-    cluster_center = kmeans.cluster_centers_[i]
-    top_term_indices = cluster_center.argsort()[-3:][::-1]
-    top_terms = ", ".join(terms[top_term_indices])
-    cluster_names.append(top_terms)
+    for i in range(n_clusters):
+        cluster_center = kmeans.cluster_centers_[i]
+        top_term_indices = cluster_center.argsort()[-3:][::-1]
+        top_terms = ", ".join(terms[top_term_indices])
+        cluster_names.append(top_terms)
 
-# Display each cluster with a human-readable label
-for i, name in enumerate(cluster_names):
-    keywords = ", ".join(df[df['Cluster'] == i]['Keyword'].tolist())
-    st.markdown(f"**Cluster {i+1} — {name.title()}:** {keywords}")
+    for i, name in enumerate(cluster_names):
+        keywords = ", ".join(df[df['Cluster'] == i]['Keyword'].tolist())
+        st.markdown(f"**Cluster {i+1} — {name.title()}:** {keywords}")
 
     # =========================
     # Visualisations
@@ -153,7 +142,6 @@ for i, name in enumerate(cluster_names):
 
 else:
     st.info("👆 Please upload an Excel file to start your SEO analysis.")
-
     st.write("""
     📘 **Instructions:**
     Upload an Excel file containing at least these columns:
@@ -163,4 +151,3 @@ else:
 
     The app automatically detects similar names (e.g., “Search Term”, “Total Clicks”, “Views”).
     """)
-
